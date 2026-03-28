@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>mtproxy — панель</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Manrope:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0f1419;
+      --surface: #1a2332;
+      --border: #2d3a4d;
+      --text: #e7ecf3;
+      --muted: #8b9cb3;
+      --accent: #3d8bfd;
+      --danger: #f85149;
+      --ok: #3fb950;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Manrope", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+    .wrap { max-width: 960px; margin: 0 auto; padding: 1.5rem; }
+    h1 { font-size: 1.35rem; font-weight: 700; margin: 0 0 0.25rem; display: flex; align-items: center; gap: 0.5rem; }
+    .sub { color: var(--muted); font-size: 0.9rem; margin-bottom: 1.5rem; }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+    }
+    label { display: block; font-size: 0.8rem; color: var(--muted); margin-bottom: 0.35rem; }
+    input, textarea {
+      width: 100%;
+      padding: 0.6rem 0.75rem;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.95rem;
+    }
+    textarea { min-height: 72px; font-family: "JetBrains Mono", monospace; font-size: 0.8rem; }
+    .row { display: grid; gap: 1rem; }
+    @media (min-width: 640px) {
+      .row-2 { grid-template-columns: 1fr 1fr; }
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.45rem;
+      padding: 0.55rem 1rem;
+      border-radius: 8px;
+      border: none;
+      font-family: inherit;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      line-height: 1;
+    }
+    .btn svg { flex-shrink: 0; }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { filter: brightness(1.08); }
+    .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+    .btn-ghost:hover { color: var(--text); border-color: var(--muted); }
+    .btn-danger { background: var(--danger); color: #fff; }
+    .btn-danger:hover { filter: brightness(1.06); }
+    .btn-sm { padding: 0.35rem 0.55rem; font-size: 0.8rem; }
+    .btn-icon {
+      padding: 0.45rem;
+      min-width: 2.35rem;
+      min-height: 2.35rem;
+    }
+    .btn-icon.btn-sm { min-width: 2rem; min-height: 2rem; padding: 0.3rem; }
+    .btn.copied { background: rgba(63, 185, 80, 0.25); border-color: var(--ok); color: var(--ok); }
+    .toolbar { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem; align-items: center; }
+    .toolbar.tight { margin-top: 0; }
+    .badge { font-size: 0.75rem; padding: 0.2rem 0.5rem; border-radius: 6px; background: var(--border); color: var(--muted); display: inline-flex; align-items: center; gap: 0.35rem; }
+    .badge.ok { background: rgba(63, 185, 80, 0.2); color: var(--ok); }
+    .badge.off { background: rgba(248, 81, 73, 0.15); color: var(--danger); }
+    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    th, td { text-align: left; padding: 0.65rem 0.5rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    th { color: var(--muted); font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; }
+    .mono { font-family: "JetBrains Mono", monospace; font-size: 0.78rem; word-break: break-all; }
+    thead th.col-est {
+      text-align: center;
+      width: 1%;
+      white-space: nowrap;
+    }
+    td.col-est {
+      vertical-align: middle;
+      text-align: center;
+      white-space: nowrap;
+      width: 1%;
+      font-variant-numeric: tabular-nums;
+    }
+    thead th.col-link {
+      text-align: center;
+      width: 1%;
+      white-space: nowrap;
+    }
+    thead th:last-child { text-align: right; }
+    td.cell-link {
+      vertical-align: middle;
+      text-align: center;
+      white-space: nowrap;
+      width: 1%;
+      padding: 0.5rem 0.35rem;
+    }
+    .cell-link .btn.btn-sm.btn-icon {
+      width: 2.125rem;
+      height: 2.125rem;
+      min-width: 2.125rem;
+      min-height: 2.125rem;
+      padding: 0;
+      border: 1px solid var(--border);
+      box-sizing: border-box;
+    }
+    td.cell-actions {
+      vertical-align: middle;
+      text-align: right;
+      white-space: nowrap;
+      width: 1%;
+      padding-top: 0.5rem;
+      padding-bottom: 0.5rem;
+    }
+    .row-actions {
+      display: inline-flex;
+      flex-wrap: nowrap;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 0.35rem;
+    }
+    .row-actions .btn.btn-sm.btn-icon {
+      width: 2.125rem;
+      height: 2.125rem;
+      min-width: 2.125rem;
+      min-height: 2.125rem;
+      padding: 0;
+      border: 1px solid transparent;
+      box-sizing: border-box;
+    }
+    .row-actions .btn.btn-ghost.btn-icon {
+      border-color: var(--border);
+    }
+    .row-actions .btn.btn-danger.btn-icon {
+      border-color: transparent;
+    }
+    .msg { padding: 0.75rem; border-radius: 8px; margin-top: 0.75rem; font-size: 0.9rem; }
+    .msg.err { background: rgba(248, 81, 73, 0.12); border: 1px solid var(--danger); color: #ffb4b0; }
+    .msg.ok { background: rgba(63, 185, 80, 0.12); border: 1px solid var(--ok); color: #acf2b3; }
+    .hidden { display: none !important; }
+    .info-line { display: flex; align-items: flex-start; gap: 0.5rem; margin: 0.35rem 0; font-size: 0.9rem; }
+    .info-line svg { flex-shrink: 0; margin-top: 0.15rem; color: var(--muted); }
+    .card-title { font-size: 1rem; margin: 0 0 1rem; display: flex; align-items: center; gap: 0.5rem; font-weight: 700; }
+    .card-title svg { color: var(--accent); }
+    dialog { border: 1px solid var(--border); border-radius: 12px; background: var(--surface); color: var(--text); padding: 0; max-width: 420px; width: calc(100% - 2rem); }
+    #dlgLink { max-width: min(36rem, calc(100% - 2rem)); }
+    #dlgLinkField,
+    #dlgNewIpsField {
+      width: 100%;
+      margin-top: 0.35rem;
+      padding: 0.65rem 0.75rem;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      font-family: "JetBrains Mono", monospace;
+      font-size: 0.72rem;
+      line-height: 1.45;
+      resize: vertical;
+      min-height: 5.5rem;
+      word-break: break-all;
+      white-space: pre-wrap;
+    }
+    #dlgNewIps { max-width: min(32rem, calc(100% - 2rem)); }
+    #dlgNewIpsField { min-height: 8rem; }
+    dialog::backdrop { background: rgba(0,0,0,0.6); }
+    .dlg-body { padding: 1.25rem; }
+    .dlg-actions { padding: 0 1.25rem 1.25rem; display: flex; gap: 0.5rem; justify-content: flex-end; flex-wrap: wrap; }
+    .h1-ic { color: var(--accent); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>
+      <span class="h1-ic" id="icH1" aria-hidden="true"></span>
+      mtproxy
+    </h1>
+    <p class="sub">Вход по логину и паролю. Управление пользователями прокси и ссылками <span class="mono">tg://</span>.</p>
+
+    <div id="gate" class="card">
+      <div class="row row-2">
+        <div>
+          <label for="loginUser">Логин</label>
+          <input id="loginUser" type="text" autocomplete="username" />
+        </div>
+        <div>
+          <label for="loginPass">Пароль</label>
+          <input id="loginPass" type="password" autocomplete="current-password" />
+        </div>
+      </div>
+      <div class="toolbar">
+        <button type="button" class="btn btn-primary" id="btnLogin" title="Войти">
+          <span id="icBtnLogin" aria-hidden="true"></span>
+          Войти
+        </button>
+      </div>
+      <div id="gateMsg" class="msg err" hidden></div>
+      <p class="sub" style="margin-top:1rem;margin-bottom:0;display:flex;align-items:flex-start;gap:0.5rem">
+        <span style="flex-shrink:0;margin-top:0.1rem" id="icGateShield" aria-hidden="true"></span>
+        <span>Используйте HTTPS (nginx), иначе пароль можно перехватить. Рекомендуется <span class="mono">MTPROTO_SESSION_HTTPS_ONLY=1</span>.</span>
+      </p>
+    </div>
+
+    <div id="panel" class="hidden">
+      <div class="card row row-2">
+        <div>
+          <div class="toolbar tight">
+            <span class="badge" id="stInstalled"><span id="icStPkg" aria-hidden="true"></span><span id="stInstalledText">—</span></span>
+            <span class="badge" id="stService"><span id="icStAct" aria-hidden="true"></span><span id="stServiceText">—</span></span>
+            <button type="button" class="btn btn-ghost btn-icon btn-sm" id="btnRefresh" title="Обновить данные" aria-label="Обновить данные"></button>
+            <button type="button" class="btn btn-danger btn-icon btn-sm" id="btnRestartPanel" title="Перезапустить панель (systemctl restart mtproto-web)" aria-label="Перезапустить панель"></button>
+            <button type="button" class="btn btn-ghost btn-icon btn-sm" id="btnLogout" title="Выйти" aria-label="Выйти" style="margin-left:auto"></button>
+          </div>
+          <p class="sub" style="margin:0.5rem 0 0;display:flex;align-items:flex-start;gap:0.35rem">
+            <span id="icFileLine" aria-hidden="true"></span>
+            <span class="mono" id="stScript" style="word-break:break-all"></span>
+          </p>
+        </div>
+        <div>
+          <div class="info-line"><span id="icPortLine" aria-hidden="true"></span><div><strong>Порт</strong> <span id="infoPort">—</span></div></div>
+          <div class="info-line"><span id="icLockLine" aria-hidden="true"></span><div><strong>TLS_DOMAIN</strong> <span class="mono" id="infoTls">—</span></div></div>
+          <div class="info-line"><span id="icGlobeLine" aria-hidden="true"></span><div><strong>Публичный IP</strong> <span class="mono" id="infoIp">—</span></div></div>
+          <div class="info-line"><span id="icClockLine" aria-hidden="true"></span><div style="font-size:0.85rem;color:var(--muted)">Дамп в лог каждые <span id="infoStatsPeriod">—</span> с (<span class="mono">STATS_PRINT_PERIOD</span>)</div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span id="icCardUsers" aria-hidden="true"></span> Пользователи прокси</div>
+        <p class="sub" style="margin:-0.5rem 0 0.75rem;font-size:0.82rem">
+          «TCP» — текущие соединения из журнала. «≈ кл.» — грубая оценка ⌈TCP÷8⌉ (не число устройств в Telegram). «Лимит» — одновременные клиенты; в <span class="mono">config.py</span> как ×8 в <span class="mono">USER_MAX_TCP_CONNS</span>. После сохранения лимитов — <span class="mono">SIGUSR2</span>. Кнопка «Новые IP» — блок <span class="mono">New IPs:</span> из того же снимка (без привязки к пользователю прокси).
+        </p>
+        <div id="listMsg"></div>
+        <p id="statsMeta" class="sub" style="margin:0.5rem 0 0" hidden></p>
+        <div class="toolbar tight" style="margin-top:0.35rem;align-items:center">
+          <button type="button" class="btn btn-ghost btn-sm" id="btnNewIps" title="Список New IPs из последнего снимка Stats for … в журнале mtprotoproxy">
+            <span id="icNewIps" aria-hidden="true"></span>
+            Новые IP
+            <span id="newIpsBadge" class="badge" style="margin-left:0.35rem;padding:0.12rem 0.4rem;font-size:0.7rem" hidden></span>
+          </button>
+        </div>
+        <div style="overflow-x:auto;margin-top:0.75rem">
+          <table>
+            <thead>
+              <tr>
+                <th>Имя</th>
+                <th>Комментарий</th>
+                <th>TCP</th>
+                <th class="col-est" title="Оценка ⌈TCP÷8⌉; не равно устройствам в Telegram">≈ кл.</th>
+                <th>Лимит <span style="font-weight:400;text-transform:none">(клиенты)</span></th>
+                <th class="col-link" title="Полная ссылка tg:// в окне по кнопке">Ссылка</th>
+                <th style="width:1%">Действия</th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 class="card-title"><span id="icCardAdd" aria-hidden="true"></span> Добавить пользователя</h2>
+        <div class="row row-2">
+          <div>
+            <label for="newUser">Имя прокси</label>
+            <input id="newUser" placeholder="пусто = сгенерировать (u + hex)" autocomplete="off" />
+          </div>
+          <div>
+            <label for="newSecret">Секрет (32 hex, пусто = случайный)</label>
+            <input id="newSecret" placeholder="пусто" class="mono" />
+          </div>
+        </div>
+        <div style="margin-top:1rem">
+          <label for="newComment">Комментарий</label>
+          <input id="newComment" type="text" maxlength="2000" placeholder="заметка для себя (не в config прокси)" autocomplete="off" />
+        </div>
+        <div class="toolbar">
+          <button type="button" class="btn btn-primary" id="btnAdd" title="Добавить пользователя">
+            <span id="icBtnAdd" aria-hidden="true"></span>
+            Добавить
+          </button>
+        </div>
+        <div id="addMsg"></div>
+      </div>
+    </div>
+  </div>
+
+  <dialog id="dlg">
+    <form method="dialog" class="dlg-body">
+      <h3 style="margin:0 0 0.75rem;font-size:1rem;display:flex;align-items:center;gap:0.45rem" id="dlgTitleWrap">
+        <span id="icDlgSliders" aria-hidden="true"></span>
+        <span id="dlgTitle">Пользователь</span>
+      </h3>
+      <input type="hidden" id="dlgUser" />
+      <div style="margin-bottom:0.75rem">
+        <label for="dlgLimit">Одновременных клиентов (0 = без лимита; в config будет ×8 TCP)</label>
+        <input id="dlgLimit" type="number" min="0" value="0" />
+      </div>
+      <div style="margin-bottom:0.75rem">
+        <label for="dlgExpiry">Срок (ДД/ММ/ГГГГ, пусто = снять)</label>
+        <input id="dlgExpiry" placeholder="31/12/2026" />
+      </div>
+      <div>
+        <label for="dlgQuota">Квота (байты или 1gb, 500mb, пусто = снять)</label>
+        <input id="dlgQuota" placeholder="10gb" />
+      </div>
+    </form>
+    <div class="dlg-actions">
+      <button type="button" class="btn btn-ghost btn-sm" id="dlgCancel" title="Отмена">
+        <span id="icDlgCancel" aria-hidden="true"></span>
+        Отмена
+      </button>
+      <button type="button" class="btn btn-primary btn-sm" id="dlgSave" title="Применить">
+        <span id="icDlgSave" aria-hidden="true"></span>
+        Применить
+      </button>
+    </div>
+  </dialog>
+
+  <dialog id="dlgNote">
+    <div class="dlg-body">
+      <h3 style="margin:0 0 0.75rem;font-size:1rem;display:flex;align-items:center;gap:0.45rem">
+        <span id="icDlgNoteTitle" aria-hidden="true"></span>
+        <span>Комментарий: <span id="dlgNoteTitle" class="mono"></span></span>
+      </h3>
+      <input type="hidden" id="dlgNoteUser" />
+      <label for="dlgNoteText">Текст (пусто = удалить заметку)</label>
+      <textarea id="dlgNoteText" rows="4" style="width:100%;margin-top:0.35rem;padding:0.6rem 0.75rem;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-family:inherit;font-size:0.9rem;resize:vertical"></textarea>
+    </div>
+    <div class="dlg-actions">
+      <button type="button" class="btn btn-ghost btn-sm" id="dlgNoteCancel">Отмена</button>
+      <button type="button" class="btn btn-primary btn-sm" id="dlgNoteSave">Сохранить</button>
+    </div>
+  </dialog>
+
+  <dialog id="dlgLink">
+    <div class="dlg-body">
+      <h3 style="margin:0 0 0.35rem;font-size:1rem">Ссылка прокси</h3>
+      <p class="sub" style="margin:0 0 0.75rem;font-size:0.82rem">Пользователь <span id="dlgLinkUser" class="mono"></span> · вставьте в Telegram или скопируйте.</p>
+      <label for="dlgLinkField">tg://</label>
+      <textarea id="dlgLinkField" readonly rows="5" spellcheck="false"></textarea>
+    </div>
+    <div class="dlg-actions">
+      <button type="button" class="btn btn-ghost btn-sm" id="dlgLinkClose">Закрыть</button>
+      <button type="button" class="btn btn-primary btn-sm" id="dlgLinkCopy" aria-label="Копировать"><span id="icDlgLinkCopy" aria-hidden="true"></span> Копировать</button>
+    </div>
+  </dialog>
+
+  <dialog id="dlgNewIps">
+    <div class="dlg-body">
+      <h3 style="margin:0 0 0.35rem;font-size:1rem">Новые IP (снимок журнала)</h3>
+      <p class="sub" style="margin:0 0 0.5rem;font-size:0.82rem">Время снимка: <span id="dlgNewIpsSnapshot" class="mono">—</span></p>
+      <p class="sub" style="margin:0 0 0.75rem;font-size:0.78rem;line-height:1.45">
+        Список из строк лога после «New IPs:» за прошедший <span class="mono">STATS_PRINT_PERIOD</span>. Это клиентские адреса, которые прокси увидел как новые в этом интервале; к имени пользователя прокси они не привязаны и это не полный список «кто сейчас онлайн».
+      </p>
+      <label for="dlgNewIpsField">Адреса (по одному в строке)</label>
+      <textarea id="dlgNewIpsField" readonly rows="10" spellcheck="false"></textarea>
+    </div>
+    <div class="dlg-actions">
+      <button type="button" class="btn btn-ghost btn-sm" id="dlgNewIpsClose">Закрыть</button>
+      <button type="button" class="btn btn-primary btn-sm" id="dlgNewIpsCopy" aria-label="Копировать список"><span id="icDlgNewIpsCopy" aria-hidden="true"></span> Копировать</button>
+    </div>
+  </dialog>
+
+  <script>
+    let lastStats = null;
+
+    const IC_LOGIN = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>';
+    const IC_LOGOUT = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>';
+    const IC_REFRESH = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>';
+    const IC_PANEL_RESTART = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>';
+    const IC_COPY = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+    const IC_LINK = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>';
+    const IC_LIST = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>';
+    const IC_CHECK = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>';
+    const IC_TRASH = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>';
+    const IC_SLIDERS = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>';
+    const IC_USER_PLUS = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>';
+    const IC_USERS = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>';
+    const IC_SERVER = '<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>';
+    const IC_SHIELD = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>';
+    const IC_PACKAGE = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>';
+    const IC_ACTIVITY = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>';
+    const IC_FILE = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>';
+    const IC_PORT = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>';
+    const IC_LOCK = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>';
+    const IC_GLOBE = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>';
+    const IC_CLOCK = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>';
+    const IC_X = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+    const IC_MESSAGE = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>';
+
+    const $ = (id) => document.getElementById(id);
+
+    function injectStaticIcons() {
+      $("icH1").innerHTML = IC_SERVER;
+      $("icBtnLogin").innerHTML = IC_LOGIN;
+      $("icGateShield").innerHTML = IC_SHIELD;
+      $("icStPkg").innerHTML = IC_PACKAGE;
+      $("icStAct").innerHTML = IC_ACTIVITY;
+      $("btnRefresh").innerHTML = IC_REFRESH;
+      $("btnRestartPanel").innerHTML = IC_PANEL_RESTART;
+      $("btnLogout").innerHTML = IC_LOGOUT;
+      $("icFileLine").innerHTML = IC_FILE;
+      $("icPortLine").innerHTML = IC_PORT;
+      $("icLockLine").innerHTML = IC_LOCK;
+      $("icGlobeLine").innerHTML = IC_GLOBE;
+      $("icClockLine").innerHTML = IC_CLOCK;
+      $("icCardUsers").innerHTML = IC_USERS;
+      $("icCardAdd").innerHTML = IC_USER_PLUS;
+      $("icBtnAdd").innerHTML = IC_USER_PLUS;
+      $("icDlgSliders").innerHTML = IC_SLIDERS;
+      $("icDlgCancel").innerHTML = IC_X;
+      $("icDlgSave").innerHTML = IC_CHECK;
+      $("icDlgLinkCopy").innerHTML = IC_COPY;
+      $("icNewIps").innerHTML = IC_LIST;
+      $("icDlgNewIpsCopy").innerHTML = IC_COPY;
+      const icn = $("icDlgNoteTitle");
+      if (icn) icn.innerHTML = IC_MESSAGE;
+    }
+    injectStaticIcons();
+
+    function showGate() {
+      $("gate").classList.remove("hidden");
+      $("panel").classList.add("hidden");
+    }
+
+    async function api(path, opts = {}) {
+      const authRedirect = opts.authRedirect !== false;
+      const fetchOpts = { ...opts };
+      delete fetchOpts.authRedirect;
+      const r = await fetch(path, {
+        credentials: "same-origin",
+        ...fetchOpts,
+        headers: {
+          "Content-Type": "application/json",
+          ...(fetchOpts.headers || {}),
+        },
+      });
+      const text = await r.text();
+      let data = null;
+      try { data = text ? JSON.parse(text) : null; } catch (_) {}
+      if (!r.ok) {
+        const d = (data && data.detail) ? data.detail : text || r.statusText;
+        if (r.status === 401 && authRedirect && path !== "api/login") {
+          showGate();
+        }
+        throw new Error(typeof d === "string" ? d : JSON.stringify(d));
+      }
+      return data;
+    }
+
+    function show(el, text, ok) {
+      el.className = "msg " + (ok ? "ok" : "err");
+      el.textContent = text;
+      el.hidden = !text;
+    }
+
+    function truncate(s, n) {
+      s = String(s);
+      if (s.length <= n) return s;
+      return s.slice(0, n - 1) + "…";
+    }
+
+    async function copyProxyLink(link, btn, ariaLabelRestore) {
+      try {
+        await navigator.clipboard.writeText(link);
+      } catch (_) {
+        const ta = document.createElement("textarea");
+        ta.value = link;
+        ta.style.position = "fixed";
+        ta.style.left = "-9999px";
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand("copy"); } catch (e2) { throw e2; }
+        document.body.removeChild(ta);
+      }
+      if (btn) {
+        btn.classList.add("copied");
+        const prev = btn.innerHTML;
+        btn.innerHTML = IC_CHECK;
+        btn.setAttribute("aria-label", "Скопировано");
+        const restoreAria = ariaLabelRestore != null ? ariaLabelRestore : "Копировать ссылку tg://";
+        setTimeout(() => {
+          btn.classList.remove("copied");
+          btn.innerHTML = prev;
+          btn.setAttribute("aria-label", restoreAria);
+        }, 1600);
+      }
+    }
+
+    async function loadStatus() {
+      const s = await api("api/status");
+      $("stInstalledText").textContent = s.installed ? "Прокси установлен" : "Не установлено";
+      $("stInstalled").className = "badge " + (s.installed ? "ok" : "off");
+      $("stServiceText").textContent = s.service_active ? "mtprotoproxy: active" : "mtprotoproxy: не active";
+      $("stService").className = "badge " + (s.service_active ? "ok" : "off");
+      $("stScript").textContent = s.script || "";
+    }
+
+    async function loadInfo() {
+      const i = await api("api/info");
+      $("infoPort").textContent = i.port;
+      $("infoTls").textContent = i.tls_domain;
+      $("infoIp").textContent = i.public_ip;
+      $("infoStatsPeriod").textContent =
+        i.stats_print_period_sec != null ? String(i.stats_print_period_sec) : "—";
+    }
+
+    async function loadUsers() {
+      const box = $("listMsg");
+      const meta = $("statsMeta");
+      show(box, "", true);
+      meta.hidden = true;
+      meta.textContent = "";
+      let data;
+      let st;
+      try {
+        [data, st] = await Promise.all([api("api/users"), api("api/stats")]);
+      } catch (e) {
+        show(box, e.message, false);
+        throw e;
+      }
+      lastStats = st;
+      const statsByUser = (st && st.users && typeof st.users === "object") ? st.users : {};
+      const badge = $("newIpsBadge");
+      if (st && st.ok && Array.isArray(st.new_ips) && st.new_ips.length > 0) {
+        badge.textContent = String(st.new_ips.length);
+        badge.hidden = false;
+      } else {
+        badge.hidden = true;
+        badge.textContent = "";
+      }
+      if (st && st.ok && st.snapshot_label) {
+        meta.textContent = "Последний снимок в логе: " + st.snapshot_label + ". " + (st.hint || "");
+        meta.hidden = false;
+      } else if (st && !st.ok && st.hint) {
+        meta.textContent = st.hint;
+        meta.hidden = false;
+      }
+      const tb = $("tbody");
+      tb.innerHTML = "";
+      for (const u of data.users || []) {
+        const srow = statsByUser[u.username];
+        const tcpNum = srow && typeof srow.tcp_current === "number" ? srow.tcp_current : null;
+        const tcp = tcpNum != null ? String(tcpNum) : "—";
+        const approxStr =
+          tcpNum == null ? "—" : String(Math.max(0, Math.ceil(tcpNum / 8)));
+        const tr = document.createElement("tr");
+
+        const tdName = document.createElement("td");
+        const strong = document.createElement("strong");
+        strong.className = "mono";
+        strong.textContent = u.username;
+        tdName.appendChild(strong);
+
+        const tdComment = document.createElement("td");
+        tdComment.style.maxWidth = "12rem";
+        const comText = (u.comment && String(u.comment).trim()) || "";
+        const comSpan = document.createElement("span");
+        comSpan.style.fontSize = "0.82rem";
+        comSpan.style.color = comText ? "var(--text)" : "var(--muted)";
+        comSpan.textContent = comText ? truncate(comText, 56) : "—";
+        comSpan.title = comText;
+        tdComment.appendChild(comSpan);
+
+        const tdTcp = document.createElement("td");
+        tdTcp.className = "mono";
+        tdTcp.textContent = tcp;
+
+        const tdEst = document.createElement("td");
+        tdEst.className = "mono col-est";
+        tdEst.textContent = approxStr;
+        tdEst.title =
+          tcpNum == null
+            ? "Нет данных TCP в последнем снимке"
+            : "Грубая оценка числа клиентов: ⌈" +
+              tcpNum +
+              "÷8⌉ = " +
+              approxStr +
+              ". Не совпадает с «устройствами» в Telegram.";
+
+        const tdLim = document.createElement("td");
+        tdLim.className = "mono";
+        const cu = u.max_concurrent_users;
+        const limVal = u.max_tcp_conns;
+        if (cu != null && cu !== undefined) {
+          tdLim.textContent = String(cu);
+          tdLim.style.color = "";
+          tdLim.title = "Одновременных клиентов (~" + limVal + " TCP в USER_MAX_TCP_CONNS)";
+        } else if (limVal != null && limVal !== undefined && limVal > 0) {
+          tdLim.textContent = String(limVal) + " TCP";
+          tdLim.style.color = "";
+          tdLim.title = "Значение из config не кратно 8 — показано сырое число TCP";
+        } else {
+          tdLim.textContent = "—";
+          tdLim.style.color = "var(--muted)";
+          tdLim.title = "Без лимита";
+        }
+
+        const tdLink = document.createElement("td");
+        tdLink.className = "cell-link";
+        const btnLink = document.createElement("button");
+        btnLink.type = "button";
+        btnLink.className = "btn btn-ghost btn-sm btn-icon";
+        btnLink.setAttribute("aria-label", "Показать ссылку tg://");
+        btnLink.title = "Ссылка tg://";
+        btnLink.innerHTML = IC_LINK;
+        btnLink.addEventListener("click", () => openDlgLink(u.username, u.link));
+        tdLink.appendChild(btnLink);
+
+        const tdAct = document.createElement("td");
+        tdAct.className = "cell-actions";
+        const actWrap = document.createElement("div");
+        actWrap.className = "row-actions";
+        const btnNote = document.createElement("button");
+        btnNote.type = "button";
+        btnNote.className = "btn btn-ghost btn-sm btn-icon";
+        btnNote.setAttribute("aria-label", "Комментарий");
+        btnNote.title = "Комментарий";
+        btnNote.innerHTML = IC_MESSAGE;
+        btnNote.addEventListener("click", () => openDlgNote(u.username, comText));
+        const btnEdit = document.createElement("button");
+        btnEdit.type = "button";
+        btnEdit.className = "btn btn-ghost btn-sm btn-icon";
+        btnEdit.setAttribute("aria-label", "Лимиты, срок, квота");
+        btnEdit.title = "Лимиты / срок / квота";
+        btnEdit.innerHTML = IC_SLIDERS;
+        btnEdit.addEventListener("click", () => openDlgLimits(u));
+        const btnDel = document.createElement("button");
+        btnDel.type = "button";
+        btnDel.className = "btn btn-danger btn-sm btn-icon";
+        btnDel.setAttribute("aria-label", "Отозвать пользователя");
+        btnDel.title = "Отозвать";
+        btnDel.innerHTML = IC_TRASH;
+        btnDel.addEventListener("click", () => revoke(u.username));
+        actWrap.appendChild(btnNote);
+        actWrap.appendChild(btnEdit);
+        actWrap.appendChild(btnDel);
+        tdAct.appendChild(actWrap);
+
+        tr.appendChild(tdName);
+        tr.appendChild(tdComment);
+        tr.appendChild(tdTcp);
+        tr.appendChild(tdEst);
+        tr.appendChild(tdLim);
+        tr.appendChild(tdLink);
+        tr.appendChild(tdAct);
+        tb.appendChild(tr);
+      }
+    }
+
+    async function revoke(username) {
+      if (!confirm("Отозвать пользователя «" + username + "»?")) return;
+      await api("api/users/" + encodeURIComponent(username), { method: "DELETE" });
+      await loadUsers();
+    }
+
+    function openDlgLimits(u) {
+      $("dlgUser").value = u.username;
+      $("dlgTitle").textContent = u.username;
+      if (u.max_concurrent_users != null && u.max_concurrent_users !== undefined) {
+        $("dlgLimit").value = String(u.max_concurrent_users);
+      } else if (u.max_tcp_conns != null && u.max_tcp_conns > 0) {
+        $("dlgLimit").value = String(Math.max(1, Math.floor(u.max_tcp_conns / 8)));
+      } else {
+        $("dlgLimit").value = "0";
+      }
+      $("dlgExpiry").value = "";
+      $("dlgQuota").value = "";
+      $("dlg").showModal();
+    }
+
+    function openDlgNote(username, text) {
+      $("dlgNoteUser").value = username;
+      $("dlgNoteTitle").textContent = username;
+      $("dlgNoteText").value = text || "";
+      $("dlgNote").showModal();
+    }
+
+    function openDlgLink(username, link) {
+      $("dlgLinkUser").textContent = username;
+      $("dlgLinkField").value = link || "";
+      $("dlgLink").showModal();
+      requestAnimationFrame(() => {
+        const el = $("dlgLinkField");
+        el.focus();
+        el.select();
+      });
+    }
+
+    function openDlgNewIps() {
+      const st = lastStats;
+      const snapEl = $("dlgNewIpsSnapshot");
+      const field = $("dlgNewIpsField");
+      if (!st || !st.ok) {
+        snapEl.textContent = "—";
+        field.value =
+          (st && st.hint) ||
+          "Нет снимка «Stats for …» в журнале mtprotoproxy (см. подсказку над таблицей).";
+      } else {
+        snapEl.textContent = st.snapshot_label || "—";
+        const ips = Array.isArray(st.new_ips) ? st.new_ips : [];
+        field.value =
+          ips.length > 0
+            ? ips.join("\n")
+            : "(В этом снимке блок New IPs пуст — за интервал не было новых клиентских адресов в смысле mtprotoproxy, или в конфиге отключён учёт CLIENT_IPS_LEN.)";
+      }
+      $("dlgNewIps").showModal();
+      requestAnimationFrame(() => {
+        field.focus();
+        field.select();
+      });
+    }
+
+    $("btnNewIps").addEventListener("click", () => openDlgNewIps());
+
+    $("dlgNewIpsClose").addEventListener("click", () => $("dlgNewIps").close());
+
+    $("dlgNewIpsCopy").addEventListener("click", () => {
+      copyProxyLink($("dlgNewIpsField").value, $("dlgNewIpsCopy"), "Копировать список");
+    });
+
+    $("dlgLinkClose").addEventListener("click", () => $("dlgLink").close());
+
+    $("dlgLinkCopy").addEventListener("click", () => {
+      copyProxyLink($("dlgLinkField").value, $("dlgLinkCopy"), "Копировать");
+    });
+
+    $("dlgNoteCancel").addEventListener("click", () => $("dlgNote").close());
+
+    $("dlgNoteSave").addEventListener("click", async () => {
+      const user = $("dlgNoteUser").value;
+      const text = $("dlgNoteText").value;
+      try {
+        await api("api/users/" + encodeURIComponent(user) + "/comment", {
+          method: "PUT",
+          body: JSON.stringify({ comment: text }),
+        });
+        $("dlgNote").close();
+        await loadUsers();
+      } catch (e) {
+        alert(e.message);
+      }
+    });
+
+    $("dlgCancel").addEventListener("click", () => $("dlg").close());
+
+    $("dlgSave").addEventListener("click", async () => {
+      const user = $("dlgUser").value;
+      const maxUsers = parseInt($("dlgLimit").value, 10);
+      const expiry = $("dlgExpiry").value.trim();
+      const quota = $("dlgQuota").value.trim();
+      try {
+        const limRes = await api("api/users/" + encodeURIComponent(user) + "/limits", {
+          method: "PUT",
+          body: JSON.stringify({ max_users: Number.isFinite(maxUsers) ? maxUsers : 0 }),
+        });
+        await api("api/users/" + encodeURIComponent(user) + "/expiry", {
+          method: "PUT",
+          body: JSON.stringify({ date: expiry }),
+        });
+        await api("api/users/" + encodeURIComponent(user) + "/quota", {
+          method: "PUT",
+          body: JSON.stringify({ limit: quota }),
+        });
+        $("dlg").close();
+        await loadUsers();
+        let fb = "Настройки сохранены. ";
+        const a = limRes && limRes.applied_limits;
+        if (a) {
+          if (a.max_concurrent_users != null) {
+            fb += "Лимит в таблице: " + a.max_concurrent_users + " одновременных клиентов (" + a.max_tcp_conns + " TCP в config). Прокси перечитал настройки (SIGUSR2).";
+          } else if (a.max_tcp_conns != null && a.max_tcp_conns > 0) {
+            fb += "В config записано " + a.max_tcp_conns + " TCP (не кратно 8 — в колонке показывается сырое значение).";
+          } else {
+            fb += "Лимит снят (без ограничения).";
+          }
+        }
+        show($("listMsg"), fb, true);
+      } catch (e) {
+        alert(e.message);
+      }
+    });
+
+    async function enterPanel() {
+      $("gate").classList.add("hidden");
+      $("panel").classList.remove("hidden");
+      await loadStatus();
+      await loadInfo();
+      await loadUsers();
+    }
+
+    $("btnLogin").addEventListener("click", async () => {
+      const username = $("loginUser").value.trim();
+      const password = $("loginPass").value;
+      const gm = $("gateMsg");
+      gm.hidden = true;
+      if (!username || !password) {
+        gm.textContent = "Введите логин и пароль";
+        gm.hidden = false;
+        return;
+      }
+      try {
+        await api("api/login", {
+          method: "POST",
+          body: JSON.stringify({ username, password }),
+          authRedirect: false,
+        });
+        $("loginPass").value = "";
+        await enterPanel();
+      } catch (e) {
+        gm.textContent = e.message;
+        gm.hidden = false;
+      }
+    });
+
+    $("btnLogout").addEventListener("click", async () => {
+      try {
+        await api("api/logout", { method: "POST", body: "{}" });
+      } catch (_) {}
+      showGate();
+    });
+
+    $("btnRefresh").addEventListener("click", async () => {
+      try {
+        await loadStatus();
+        await loadInfo();
+        await loadUsers();
+      } catch (e) {
+        show($("listMsg"), e.message, false);
+      }
+    });
+
+    $("btnRestartPanel").addEventListener("click", async () => {
+      if (!confirm("Перезапустить веб-панель (systemctl restart mtproto-web)? Сессия прервётся на несколько секунд.")) return;
+      try {
+        const r = await api("api/panel/restart", { method: "POST", body: "{}" });
+        show($("listMsg"), (r && r.msg) ? r.msg : "Перезапуск…", true);
+        setTimeout(() => { window.location.reload(); }, 3500);
+      } catch (e) {
+        show($("listMsg"), e.message, false);
+      }
+    });
+
+    $("btnAdd").addEventListener("click", async () => {
+      const username = $("newUser").value.trim();
+      const secret = $("newSecret").value.trim();
+      const comment = $("newComment").value.trim();
+      const body = {};
+      if (username) body.username = username;
+      if (secret) body.secret = secret;
+      if (comment) body.comment = comment;
+      try {
+        const res = await api("api/users", { method: "POST", body: JSON.stringify(body) });
+        const msg = res && res.msg;
+        const link = msg && msg.link ? msg.link : JSON.stringify(res);
+        const wrap = $("addMsg");
+        wrap.className = "msg ok";
+        wrap.hidden = false;
+        wrap.innerHTML = "";
+        const p = document.createElement("span");
+        p.textContent = username ? "Готово. " : "Создан пользователь (имя в таблице). ";
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "btn btn-ghost btn-sm";
+        btn.style.marginLeft = "0.35rem";
+        btn.innerHTML = IC_COPY + " Копировать ссылку";
+        btn.addEventListener("click", () => copyProxyLink(typeof link === "string" ? link : String(link), btn));
+        wrap.appendChild(p);
+        if (msg && msg.link) {
+          wrap.appendChild(btn);
+        } else {
+          const code = document.createElement("span");
+          code.className = "mono";
+          code.textContent = typeof link === "string" ? link : JSON.stringify(res);
+          wrap.appendChild(code);
+        }
+        $("newUser").value = "";
+        $("newSecret").value = "";
+        $("newComment").value = "";
+        await loadUsers();
+      } catch (e) {
+        show($("addMsg"), e.message, false);
+      }
+    });
+
+    (async function init() {
+      try {
+        await api("api/status", { authRedirect: false });
+        await enterPanel();
+      } catch (_) {
+        showGate();
+      }
+    })();
+  </script>
+</body>
+</html>

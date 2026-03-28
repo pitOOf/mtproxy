@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+
+# Секреты и локальные оверрайды (не коммитить)
+.env
+.env.*
+*.local.py
+config/*-secret*.py
+
+# IDE / ОС
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Логи и кэши
+*.log
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/

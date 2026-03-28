@@ -1,0 +1,5 @@
+fastapi>=0.109.0
+# Без [standard]: на части VPS падают uvloop/httptools — панель не поднимается, health-check не проходит
+uvicorn>=0.27.0
+# SessionMiddleware в Starlette импортирует itsdangerous; в ряде сборок pip не тянет его как транзитивную зависимость
+itsdangerous>=2.1.0
