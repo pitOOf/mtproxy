@@ -154,8 +154,6 @@ sudo systemctl restart mtproto-web
 
 ---
 
-## Лицензии и безопасность
+## 🙌 Благодарности
 
-- Ваш код в репозитории — см. **`LICENSE`** в корне.
-- **`bundled-mtprotoproxy/`** — MIT, Alexander Bersenev ([alexbers/mtprotoproxy](https://github.com/alexbers/mtprotoproxy)).
-- Вход в панель лучше за **HTTPS** (`MTPROTO_SESSION_HTTPS_ONLY=1` за reverse-proxy). Самоподписанный сертификат при установке по умолчанию — только для быстрого старта.
+- **`bundled-mtprotoproxy/`** — MIT, Alexander Bersenev ([alexbers/mtprotoproxy](https://github.com/alexbers/mtprotoproxy)). - за отличный движок прокси.
